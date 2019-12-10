@@ -5,13 +5,15 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "3271220903",
+    "hash" : "3208283349",
     "id" : "2D4615A4",
-    "lastKnownWriteTime" : 1576004058,
-    "last_content_update" : 1576004058,
+    "lastKnownWriteTime" : 1576005122,
+    "last_content_update" : 1576005122411,
     "path" : "C:/Users/dave/Desktop/GitHub/website2/config.toml",
     "project_path" : "config.toml",
     "properties" : {
+        "cursorPosition" : "2,18",
+        "scrollLine" : "0"
     },
     "read_only" : false,
     "read_only_alternatives" : [
