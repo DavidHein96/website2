@@ -1,0 +1,295 @@
+---
+title: "Opioid Crisis Part 2"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width=5,fig.height = 3.33)
+```
+
+## David Hein
+### Introduction
+This project explores the interaction of several different variables related to the ongoing opioid crisis in the United States. There were five different data sets combined, four from project 1 and one new data set. The data sets for opioid prescription rates per 100 people and drug overdose deaths per 100,000 people on a county level in 2016 were taken from the CDC. The data sets for median household income on a county level and percentage of adults lacking a high school diploma on a county level in 2016 were taken from the US Census Bureau. The urbanization levels 1-9 for each county in 2013 was taken from the USDA, with 1 being the most urban and 9 being the most rural. The drug deaths per 100,000 people was renamed to deathrate, the median income was renamed to newincome, the percentage without a highschool diploma was renamed to diplomaless, and the opioid prescription rate per 100 people was renamed prate.
+
+### Loading data and packages; Cleaning and Joining (From Project 1)
+```{R echo=T, results='hide', message=FALSE, warning=FALSE,tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+#loading packages and data sets
+setwd("C:/Users/dave/Desktop/CompBioProject")
+scriptrate <- read.csv("Opiod_Rates.csv")
+income <- read.csv("finalincome.csv",stringsAsFactors = FALSE,header = TRUE)
+deaths <- read.csv("Drug_poisoning.csv")
+education <- read.csv("cleanededucation.csv")
+urbanrural <- read.csv("rural.csv")
+deaths <- as.data.frame(deaths)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(lmtest)
+library(pROC)
+library(plotROC)
+library(mvtnorm)
+library(sandwich)
+library(glmnet)
+
+#cleaning data
+sixteendeath <- deaths %>% filter(Year == 2016) %>% select(FIPS,County,Model.based.Death.Rate) %>%
+    separate(County, into=c("county","state"), sep = ",") %>% rename(deathrate = Model.based.Death.Rate) %>% select(-county)
+cincome <- income$incomes %>% unlist() %>% as.numeric()
+totincome <- income %>% mutate(newincome=cincome)
+ceducation <- education %>% select(FIPS.Code, Area.name, Percent.of.adults.with.less.than.a.high.school.diploma..2013.17) %>%
+  rename( diplomaless = Percent.of.adults.with.less.than.a.high.school.diploma..2013.17) %>% rename(county = Area.name) %>%
+  rename(FIPS = FIPS.Code) %>% select(-county)
+cscriptrate <- scriptrate %>% separate(County, into=c("county","state"),sep = ",") %>% select(county,Code,Rate,-state) %>%
+  rename(FIPS = Code,prate = Rate) %>% drop_na(prate) %>% distinct()
+#joining data
+educationandprate <- full_join(ceducation,cscriptrate, by = "FIPS")
+almostfulldata <- inner_join(educationandprate, sixteendeath, by = "FIPS")
+fulldata <- inner_join(almostfulldata,totincome,by="FIPS") %>% drop_na() %>% select(-incomes)
+set.seed(1234)
+```
+
+
+### Alterations to data for project 2
+This is where I introduced the new data set with urbanization codes, the variable name was urbanization. I split it into three levels, 1-3 being metro, 4-6 being suburban, and 7-9 being rural. 
+```{R tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+#urbanrural is a new data set for project 2
+urban <- urbanrural %>% select(FIPS, RUCC_2013)
+p2data <- inner_join(fulldata,urban,by="FIPS")
+
+#making urbanization catagorical
+pr2data <- p2data %>% mutate(urbanization = case_when(RUCC_2013 < 4 ~ "metro", 4<=RUCC_2013 & RUCC_2013<7 ~ "suburban", RUCC_2013>= 7 ~ "rural"))
+
+
+```
+
+### MANOVA
+The MANOVA test is statistically significant meaning that one of the numerical variables shows a mean difference across urbanization levels. ANNOVA of all four numeric variables found that there is a significant difference in all four. For prescription rate, deathrate, income, and diplomaless, the mean values differ across levels of urbanization while holding the other variables constant. A 0.05 alpha was used for significance but was adjusted to 0.00294 because 17 tests were used total. For prescription rate, there is a significant difference between suburban and metro and suburban and rural. For deathrate, there were no significant differences between regions after the Bonferroni adjustment. For income, there was a significant difference between rural and metro and suburban and metro. FOr diplomaless there was a significant difference between rural and metro and suburban and metro. The total chance of a type 1 error is 0.002466. The sample size was very large so normality was most likely met, and the data was from government agencies which most likely employee random sampling (or in the case of census data massive sample sizes).
+```{R tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+mano <- manova(cbind(prate,deathrate,newincome,diplomaless)~urbanization, data = pr2data)
+summary(mano)
+summary.aov(mano)
+pairwise.t.test(pr2data$prate,pr2data$urbanization, padj="none")
+pairwise.t.test(pr2data$deathrate,pr2data$urbanization, padj="none")
+pairwise.t.test(pr2data$newincome,pr2data$urbanization, padj="none")
+pairwise.t.test(pr2data$diplomaless,pr2data$urbanization, padj="none")
+
+#bonferroni, 1 mannova, 4 annova, 12 t tests
+0.05/17
+#alpha = 0.00294
+
+#total p values
+2.2e-16+2.2e-16+0.002466+2.2e-16+2.2e-16+7.5e-12+2e-16+2e-16+2e-16
+```
+
+
+### Randomization
+This randomization test investigates if there is a true difference in deathrate between metro and rural counties. The null would be that the probability of observing a mean difference as large as the one seen experimentally under a random distribution is greater than 5%. The alternative is that it would be less than 5%. The result is 0.0088, meaning that in a random distribution a mean difference in death rates between metro and rural counties of 0.967 would only be seen 0.88% of the time. There is a significant difference between the mean deathrate of urban vs rural counties. 
+```{R tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+#randomsample <- pr2data %>% data.frame(condition=c(rep("prate",100),rep("urbanization",100)),deathrate=c(prate,urbanization))
+
+#actual difference
+pr2data %>% dplyr::select(deathrate, urbanization) %>% group_by(urbanization) %>% summarize(averagedeath = mean(deathrate))
+
+#metro - rural
+20.36157-19.39416
+# equal to 0.96741
+
+rand_dist<- vector()
+for(i in 1:5000){
+  new <- data.frame(deathrate = sample(pr2data$deathrate), urbanization=pr2data$urbanization)
+  rand_dist[i] <- mean(new[new$urbanization == "metro",]$deathrate)-
+                  mean(new[new$urbanization == "rural",]$deathrate)
+  
+}
+
+{hist(rand_dist, main="",ylab=""); abline(v= 0.96741,col = "red")}
+
+#prob of observing mean diff as extreme as the experimental under random distribution
+mean(rand_dist>0.96741)*2
+
+
+```
+
+
+### Linear regression
+In the linear regression, the intercept means that a metro county with average prescription rate has a drug overdose death rate of 20.54 per 100,000. Centerp of 0.0724 means that for every 1 increase in prescription rate above average there is a 0.072 increase in overdose death rate. The value of -0.789 for urbanizationrural means that compared to a metro county with the same number of prescriptions, a rural county has a deathrate 0.789 lower. The value of urbanizationsuburban of -1.76 means that a suburban county has a death rate 1.76 lower than a metro county with the same number of prescriptions. The terms for center:p:urbanizationrural means that the effect of prescriptions on death rates is different between metro and rural counties. The term for centerp:urbanizationsuburban means that the effect of prescription rate on death rate is different between metro and suburban counties.
+
+The residuals are not normally distributed and do not have equal variance as seen the the graphs. Using robust standard errors did not affect the significance of any terms, although it did raise p values, they are still all significant at a 0.05 level. Using robust standard errors did increase the standard error for every term except urbanizationsuburban. 
+```{R tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+#mean centering and linear regression
+lr1data <- pr2data %>% dplyr::select(deathrate,prate,urbanization) %>% mutate(centerp = prate - mean(prate))
+fit1 <- glm(deathrate~centerp*urbanization,data=lr1data)
+coeftest(fit1)
+summary(fit1)
+#plot of linear regression
+qplot(x= centerp,y=deathrate,color=urbanization, data = lr1data) + stat_smooth(method = "lm", se = FALSE, fullrange = TRUE)
+
+#check equal varience of residuals
+resids1 <- fit1$residuals
+fitvals1 <- fit1$fitted.values
+ggplot() + geom_point(aes(fitvals1, resids1))+ geom_hline(yintercept=0, color = "red")
+
+#check normality of residuals
+ggplot() + geom_histogram(aes(resids1),bins=30)
+
+#recompute with robust SE
+bptest(fit1)
+coeftest(fit1,vcov = vcovHC(fit1))
+
+#% of variation model explains, for some reason I could not get the r squared 
+
+
+#Lm with no interaction likelyhood ratio test???
+fit2 <- glm(deathrate~centerp+urbanization,data=lr1data)
+coeftest(fit2)
+```
+
+
+### Linear regression w/ bootstrap
+The bootsrtapped standard errors are the largest out of the original and the robust, excpet for urbanization suburban which is lower than the robust SE method. 
+```{R tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+samp_distn <- replicate(5000, {
+  boot_dat <- lr1data[sample(nrow(lr1data),replace=TRUE),]
+  fit <- lm(deathrate~centerp*urbanization,data=boot_dat)
+  coef(fit)
+  
+})
+
+#bootstraped SEs
+samp_distn %>% t %>% as.data.frame %>% summarize_all(sd)
+```
+
+
+### Logistic Regression
+In the logistic regression the prescription rate, income, rural and suburban terms were significant. An increase in 1 prescription per 100 people increases the odds of a county being 1 standard deviation above the mean in drug overdose death rates by a factor of 1.011 (while controlling for other variables). An increase in 1 dollar in median income in a county decreases the odds of a county being 1 standard deviation above the mean in drug overdose death rates by a factor of 0.9998 (while controlling for other variables). The odds that a rural county has  1 standard deviation above the mean in drug overdose death rates is 0.34 the odds of a metro county while controlling for other variables. Finally, the odds of a suburban county having  1 standard deviation above the mean in drug overdose death rates is 0.28 the odds of a metro county while controlling for other variables. The accuracy was quite good at 88% but this is misleading as the sensitivity is very bad at only 17%. The model is greatly underpredicting the number of counties with large amounts of drug overdoses. The specificity is great since the majority of counties have low deathrates, but the precision is only 50%. The AUC is 0.71 which is not that great, but still better than chance. The out of sample accuracy, sensitivity and recall were all basically the same, this is most likely due to the large sample size used to create the model.
+```{R tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+#making death rate binary, with 1 equal to 1 stdev above mean
+meandeathrate <- mean(fulldata$deathrate)
+stdevdeathrate <- sd(fulldata$deathrate)
+cuttoff <- meandeathrate + stdevdeathrate
+cuttoff
+logdata <- pr2data %>% mutate(highdeaths = ifelse(deathrate>27.77,1,0))
+
+
+fitlog <- glm(highdeaths~diplomaless+prate+newincome+urbanization,data=logdata,family=binomial)
+coeftest(fitlog)
+exp(coeftest(fitlog))
+
+
+#confusion matrix
+prob <- predict(fitlog,type="response")
+table(predict=as.numeric(prob>0.5),truth = logdata$highdeaths) %>% addmargins
+
+#accuracy
+(2592+6)/2944
+
+#sensitivity TPR
+6/346
+
+#specificity TNR
+2592/2598
+
+#precision PPV
+6/12
+
+#plot density log odds by binary outcome
+datatest <- logdata
+datatest$logit <- predict(fitlog,type="link")
+datatest$hdr <- as.factor(datatest$highdeaths)
+datatest %>% ggplot() + geom_density(aes(logit,color=hdr,fill=hdr),alpha= 0.4) +
+    theme(legend.position = c(0.8,0.8)) + geom_vline(xintercept=0) + xlab("predictor")
+
+#ROC curve and AUC
+ROC <- ggplot(logdata) + geom_roc(aes(d=highdeaths,m=prob),n.cuts=0)
+ROC
+calc_auc(ROC)
+
+
+#Ten fold CV
+#class diags, I used the code from HW9 I assume its ok to reuse this code?
+class_diag<-function(probs,truth){
+  
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+  
+  ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  
+  TPR=cumsum(truth)/max(1,sum(truth)) 
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+
+  data.frame(acc,sens,spec,ppv,auc)
+}
+
+k=10
+cvdata <- logdata[sample(nrow(logdata)),]
+folds <- cut(seq(1:nrow(logdata)),breaks=k,labels=F)
+diags <- NULL
+for(i in 1:k){
+  train <- cvdata[folds!=i,]
+  test <- cvdata[folds==i,]
+  truth <- test$highdeaths
+  
+  fitlog2 <- glm(highdeaths~diplomaless+prate+newincome+urbanization,data=logdata,family=binomial)
+  probs <- predict(fitlog2,newdata=test,type="response")
+  
+  diags<-rbind(diags,class_diag(probs,truth))
+  
+}
+apply(diags,2,mean)
+
+
+```
+
+
+### LASSO Regression
+All predictors ended up being useful accroding to LASSO. Thus, there was baisically no change in no change in out of sample accuracy or AUC. 
+```{R tidy=TRUE, tidy.opts=list(width.cutoff=60)}
+# predictors in one matrix, response in another
+y1<- as.matrix(logdata$highdeaths)
+x<- model.matrix(fitlog)
+x2<- as.data.frame(x)
+x3<- x2 %>% dplyr::select(-"(Intercept)")
+x4<-as.matrix(x3)
+
+#lasso
+cv1 <- cv.glmnet(x4,y1,family = "binomial")
+lasso <- glmnet(x4,y1,lambda=cv1$lambda.1se, family = "binomial")
+coef(lasso)
+
+#10 fold CV (to avoid being repetative I left out newincome since it was closest to zero)
+k=10
+cvdata <- logdata[sample(nrow(logdata)),]
+folds <- cut(seq(1:nrow(logdata)),breaks=k,labels=F)
+diags <- NULL
+
+
+for(i in 1:k){
+  train <- cvdata[folds!=i,]
+  test <- cvdata[folds==i,]
+  truth <- test$highdeaths
+  
+  fitlog2 <- glm(highdeaths~diplomaless+prate+urbanization,data=logdata,family=binomial)
+  probs <- predict(fitlog2,newdata=test,type="response")
+  
+  diags<-rbind(diags,class_diag(probs,truth))
+}
+apply(diags,2,mean)
+
+
+
+```

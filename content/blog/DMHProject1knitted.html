@@ -1,0 +1,212 @@
+---
+title: "Exploring the Opioid Crisis"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+<div id="david-hein" class="section level2">
+<h2>David Hein</h2>
+<div id="introduction" class="section level3">
+<h3>Introduction</h3>
+<p>This project explores the interaction of several different variables related to the ongoing opioid crisis in the United States. There were four different data sets combined. The data sets for opioid prescription rates per 100 people and drug overdose deaths per 100,000 people on a county level in 2016 were taken from the CDC. The data sets for median household income on a county level and percentage of adults lacking a high school diploma on a county level in 2016 were taken from the US Census Bureau. The expected association is that low income counties will have high levels of opioid prescription rates, drug overdose rates, and percentages of people without high school diplomas.</p>
+</div>
+<div id="loading-data-packages" class="section level3">
+<h3>Loading Data &amp; Packages</h3>
+<p>Income was being read in a factor, I had to turn it into a char. Later on in data cleaning I go through the process of finally turning it into an integer.</p>
+<pre class="r"><code>setwd(&quot;C:/Users/dave/Desktop/CompBioProject&quot;)
+scriptrate &lt;- read.csv(&quot;Opiod_Rates.csv&quot;)
+income &lt;- read.csv(&quot;finalincome.csv&quot;, stringsAsFactors = FALSE, 
+    header = TRUE)
+deaths &lt;- read.csv(&quot;Drug_poisoning.csv&quot;)
+education &lt;- read.csv(&quot;cleanededucation.csv&quot;)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+deaths &lt;- as.data.frame(deaths)
+library(lmtest)
+library(pROC)
+library(plotROC)
+## loading packages and data</code></pre>
+</div>
+<div id="cleaning-data" class="section level3">
+<h3>Cleaning Data</h3>
+<p>The data set for drug deaths included almost thirty years worth of data thus had to be filtered to just 2016. The income data was stored as characters, thus had to be unlisted and changed to a numeric value, and then added back into the data frame. The drug deaths per 100,000 people was renamed to deathrate, the median income was renamed to newincome, the percentage without a highschool diploma was renamed to diplomaless, and the opioid prescription rate per 100 people was renamed prate. No reshaping was necessary as all data was properly formatted by the CDC and Census. Most data sets contained extraneous data thus select was used to grab only the data needed. I used separate quite a bit because I thought I would join by county name, but this proved to be not ideal as there were a lot of duplicates.</p>
+<pre class="r"><code>sixteendeath &lt;- deaths %&gt;% filter(Year == 2016) %&gt;% dplyr::select(FIPS, 
+    County, Model.based.Death.Rate) %&gt;% separate(County, into = c(&quot;county&quot;, 
+    &quot;state&quot;), sep = &quot;,&quot;) %&gt;% rename(deathrate = Model.based.Death.Rate) %&gt;% 
+    dplyr::select(-county)
+
+cincome &lt;- income$incomes %&gt;% unlist() %&gt;% as.numeric()
+totincome &lt;- income %&gt;% mutate(newincome = cincome)
+
+
+ceducation &lt;- education %&gt;% dplyr::select(FIPS.Code, Area.name, 
+    Percent.of.adults.with.less.than.a.high.school.diploma..2013.17) %&gt;% 
+    rename(diplomaless = Percent.of.adults.with.less.than.a.high.school.diploma..2013.17) %&gt;% 
+    rename(county = Area.name) %&gt;% rename(FIPS = FIPS.Code) %&gt;% 
+    dplyr::select(-county)
+
+cscriptrate &lt;- scriptrate %&gt;% separate(County, into = c(&quot;county&quot;, 
+    &quot;state&quot;), sep = &quot;,&quot;) %&gt;% dplyr::select(county, Code, Rate, 
+    -state) %&gt;% rename(FIPS = Code, prate = Rate) %&gt;% drop_na(prate) %&gt;% 
+    distinct()
+
+## cleaning data</code></pre>
+</div>
+<div id="joining-data" class="section level3">
+<h3>Joining Data</h3>
+<p>The unique FIPS county code was used to join the data sets. There were a surprisingly large number of counties in different states with the same name, thus county name could not be used. I used inner joins to produce complete data sets with no missing data. About 250 counties were dropped, mostly because they lacked data on opioid prescription rates.</p>
+<pre class="r"><code>educationandprate &lt;- full_join(ceducation, cscriptrate, by = &quot;FIPS&quot;)
+almostfulldata &lt;- inner_join(educationandprate, sixteendeath, 
+    by = &quot;FIPS&quot;)
+fulldata &lt;- inner_join(almostfulldata, totincome, by = &quot;FIPS&quot;) %&gt;% 
+    drop_na() %&gt;% dplyr::select(-incomes)
+glimpse(fulldata)</code></pre>
+<pre><code>## Observations: 2,955
+## Variables: 7
+## $ FIPS        &lt;int&gt; 1001, 1003, 1005, 1007, 1009, 1011, 1013, 1015, 10...
+## $ diplomaless &lt;dbl&gt; 12.3, 9.8, 26.9, 17.9, 20.2, 28.6, 18.9, 16.8, 19....
+## $ county      &lt;chr&gt; &quot;Autauga&quot;, &quot;Baldwin&quot;, &quot;Barbour&quot;, &quot;Bibb&quot;, &quot;Blount&quot;,...
+## $ prate       &lt;dbl&gt; 129.6, 123.8, 92.7, 97.2, 56.9, 19.8, 135.4, 161.0...
+## $ state       &lt;chr&gt; &quot; AL&quot;, &quot; AL&quot;, &quot; AL&quot;, &quot; AL&quot;, &quot; AL&quot;, &quot; AL&quot;, &quot; AL&quot;, &quot;...
+## $ deathrate   &lt;dbl&gt; 13.34857, 17.34256, 12.37231, 20.99470, 22.47018, ...
+## $ newincome   &lt;dbl&gt; 58343, 56607, 32490, 45795, 48253, 29113, 36842, 4...</code></pre>
+<pre class="r"><code>## Joining data</code></pre>
+</div>
+<div id="summary-stats" class="section level3">
+<h3>Summary Stats</h3>
+<p>The state with the largest average drug overdose death rate was West Virgina, followed by Kentucky. Surprisingly, counties in Kentucky have on average more opioid prescriptions than people. I computed many state and national averages for the variables in this data set, but I think the correlation matrix is the most interesting by far. The correlation between median income and percentage people lacking a high school was strongly negative at -0.57 as would be expected. The correlation between death rate and prescription rate was 0.27 suggeting that with more opioids available people are more likely to overdose. There is also a negative correlation between prescription rate and median income, suggesting that poor counties have more opioid prescriptions.</p>
+<pre class="r"><code>## state level
+fulldata %&gt;% group_by(state) %&gt;% summarise(AveragePrate = mean(prate), 
+    MedianIncome = mean(newincome), AverageDeathRate = mean(deathrate)) %&gt;% 
+    arrange(desc(AverageDeathRate))</code></pre>
+<pre><code>## # A tibble: 51 x 4
+##    state AveragePrate MedianIncome AverageDeathRate
+##    &lt;chr&gt;        &lt;dbl&gt;        &lt;dbl&gt;            &lt;dbl&gt;
+##  1 &quot; DC&quot;         32.5       80153              37.1
+##  2 &quot; WV&quot;         87.5       41752.             36.4
+##  3 &quot; KY&quot;        103.        43486.             31.6
+##  4 &quot; MD&quot;         73.8       73003.             29.9
+##  5 &quot; MA&quot;         51.4       73367.             29.1
+##  6 &quot; OH&quot;         73.3       53756.             27.8
+##  7 &quot; DE&quot;         81.2       61692.             27.8
+##  8 &quot; PA&quot;         71.8       54338.             27.5
+##  9 &quot; NM&quot;         62.1       43376.             27.0
+## 10 &quot; NH&quot;         67.4       65589.             27.0
+## # ... with 41 more rows</code></pre>
+<pre class="r"><code>## national averages
+fulldata %&gt;% summarise(AveragePrate = mean(prate), MedianIncome = mean(newincome), 
+    AverageDeathRate = mean(deathrate), adultsnotgraduatedhigh = mean(diplomaless))</code></pre>
+<pre><code>##   AveragePrate MedianIncome AverageDeathRate adultsnotgraduatedhigh
+## 1     76.37591     51153.34         19.69899               13.84728</code></pre>
+<pre class="r"><code>numericdata &lt;- fulldata %&gt;% dplyr::select_if(is.numeric) %&gt;% 
+    dplyr::select(-FIPS)
+cormatrix &lt;- cor(numericdata) %&gt;% as.data.frame %&gt;% rownames_to_column %&gt;% 
+    pivot_longer(-1) %&gt;% ggplot(aes(rowname, name, fill = value)) + 
+    geom_tile() + geom_text(aes(label = round(value, 2))) + xlab(&quot;&quot;) + 
+    ylab(&quot;&quot;) + scale_fill_gradient2(low = &quot;red&quot;, high = &quot;green&quot;)
+cormatrix</code></pre>
+<p><img src="/blog/DMHProject1knitted_files/figure-html/unnamed-chunk-4-1.png" width="480" /></p>
+<pre class="r"><code>## some summary statistics</code></pre>
+</div>
+<div id="county-level-graph-of-drug-deaths-vs-opioid-prescription-with-median-income-as-fill" class="section level3">
+<h3>County Level Graph of Drug Deaths vs Opioid Prescription with median income as fill</h3>
+<p>This graph shows the positive correlation between drug related deaths and opioid prescriptions. The blue high income counties tend to be located in the bottom left, indicating low deaths and prescription rates.</p>
+<pre class="r"><code>numericdata &lt;- fulldata %&gt;% select_if(is.numeric) %&gt;% dplyr::select(-FIPS)
+ggplot(numericdata, aes(x = prate, y = deathrate, color = newincome)) + 
+    geom_point() + geom_smooth(method = lm) + xlab(&quot;Opioid Prescription Rate per 100 People&quot;) + 
+    ylab(&quot;Drug Related Deaths per 100,000 People&quot;) + scale_color_gradient(low = &quot;red&quot;, 
+    high = &quot;blue&quot;) + theme_test()</code></pre>
+<p><img src="/blog/DMHProject1knitted_files/figure-html/unnamed-chunk-5-1.png" width="480" /></p>
+<pre class="r"><code>## county level</code></pre>
+</div>
+<div id="state-level-graph-of-drug-deaths-vs-opioid-prescriptions-with-median-income-as-fill" class="section level3">
+<h3>State Level Graph of Drug Deaths vs Opioid prescriptions with median income as fill</h3>
+<p>This graph shows the same positive correlation as the one before but uses summarized data of state averages. The correlation is not a strong when using state level data because there is less variation between states as a whole than there are between counties.</p>
+<pre class="r"><code>fulldata %&gt;% group_by(state) %&gt;% summarise(AveragePrate = mean(prate), 
+    MedianIncome = mean(newincome), AverageDeathRate = mean(deathrate)) %&gt;% 
+    ggplot(aes(x = AveragePrate, y = AverageDeathRate, color = MedianIncome)) + 
+    geom_point() + geom_smooth(method = lm) + xlab(&quot;Opioid Prescription Rate per 100 People&quot;) + 
+    ylab(&quot;Drug Related Deaths per 100,000 People&quot;) + scale_color_gradient(low = &quot;red&quot;, 
+    high = &quot;blue&quot;) + theme_test()</code></pre>
+<p><img src="/blog/DMHProject1knitted_files/figure-html/unnamed-chunk-6-1.png" width="480" /></p>
+<pre class="r"><code>## state level</code></pre>
+</div>
+<div id="pca" class="section level3">
+<h3>PCA</h3>
+<p>Principle component 1 describes 45% of variance in the data. This component separates high income counties from counties that have high rates of opioid prescriptions, drug deaths, and adults without high school diplomas. Basically, low income is positively correlated to the three other variables. Three principle components describe 89% of the variation.</p>
+<pre class="r"><code>scaled &lt;- numericdata %&gt;% scale()
+scaledpca &lt;- princomp(scaled)
+summary(scaledpca, loadings = T)</code></pre>
+<pre><code>## Importance of components:
+##                           Comp.1    Comp.2    Comp.3    Comp.4
+## Standard deviation     1.3454794 1.0211660 0.8504951 0.6497767
+## Proportion of Variance 0.4527319 0.2607833 0.1808967 0.1055882
+## Cumulative Proportion  0.4527319 0.7135152 0.8944118 1.0000000
+## 
+## Loadings:
+##             Comp.1 Comp.2 Comp.3 Comp.4
+## diplomaless  0.567  0.443  0.179  0.671
+## prate        0.439 -0.479 -0.746  0.145
+## deathrate    0.339 -0.689  0.641       
+## newincome   -0.610 -0.315         0.727</code></pre>
+<pre class="r"><code>ggplot() + geom_point(aes(scaledpca$scores[, 1], scaledpca$scores[, 
+    2])) + xlab(&quot;PC1&quot;) + ylab(&quot;PC2&quot;) + theme_test()</code></pre>
+<p><img src="/blog/DMHProject1knitted_files/figure-html/unnamed-chunk-7-1.png" width="480" /></p>
+</div>
+<div id="regression" class="section level3">
+<h3>Regression</h3>
+<p>In the logistic regression only the prescription rate term was significant. An increase in 1 prescription per 100 people increases the odds of a county being 1 standard deviation above the mean in drug overdose death rates by a factor of 1.011 (while controlling for other variables). The AUC for the roc plot was 0.65, suggesting this model is not a very good fit. The linear regression shows a significant effect of prescription rate and average income on death rate while controlling for other other variables. An increase in average income results in a decrease in death rates, and an increase in prescription rates results in an increase in death rates. The interaction term for prescription and adults without diplomas is significant. My working hypothesis for this is that communities with high populations of retired people may have high opioid prescriptions, high high-school diploma rates, and low drug overdose rates. Thus the effect of prescription rate on overdose deaths would differ across levels of diplomaless.</p>
+<pre class="r"><code># Making death rate a binary variable with 1 equal to a
+# county with &gt;1 std dev death rate above mean
+meandeathrate &lt;- mean(fulldata$deathrate)
+stdevdeathrate &lt;- sd(fulldata$deathrate)
+cuttoff &lt;- meandeathrate + stdevdeathrate
+cuttoff</code></pre>
+<pre><code>## [1] 27.77922</code></pre>
+<pre class="r"><code>logdata &lt;- fulldata %&gt;% mutate(highdeaths = ifelse(deathrate &gt; 
+    27.77, 1, 0))
+fit &lt;- glm(highdeaths ~ diplomaless + prate + newincome, data = logdata, 
+    family = binomial)
+coeftest(fit)</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##                Estimate  Std. Error z value  Pr(&gt;|z|)    
+## (Intercept) -3.1467e+00  4.6489e-01 -6.7687 1.300e-11 ***
+## diplomaless  2.0322e-02  1.1468e-02  1.7720   0.07639 .  
+## prate        1.1305e-02  1.3797e-03  8.1939 2.528e-16 ***
+## newincome   -2.4098e-06  6.1154e-06 -0.3941   0.69354    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>exp(coef(fit))</code></pre>
+<pre><code>## (Intercept) diplomaless       prate   newincome 
+##  0.04299438  1.02052978  1.01136941  0.99999759</code></pre>
+<pre class="r"><code>probfit &lt;- predict(fit, type = &quot;response&quot;)
+rocplot &lt;- ggplot(logdata) + geom_roc(aes(d = highdeaths, m = probfit), 
+    n.cuts = 0) + theme_test()
+rocplot</code></pre>
+<p><img src="/blog/DMHProject1knitted_files/figure-html/unnamed-chunk-8-1.png" width="480" /></p>
+<pre class="r"><code>calc_auc(rocplot)</code></pre>
+<pre><code>##   PANEL group      AUC
+## 1     1    -1 0.657119</code></pre>
+<pre class="r"><code># A linear regression to look at the interaction of prate and
+# diplomaless
+fit2 &lt;- glm(deathrate ~ prate * diplomaless + newincome, data = fulldata)
+coeftest(fit2)</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##                      Estimate  Std. Error z value  Pr(&gt;|z|)    
+## (Intercept)        1.9255e+01  1.1745e+00 16.3940 &lt; 2.2e-16 ***
+## prate              2.5374e-02  9.3869e-03  2.7031 0.0068686 ** 
+## diplomaless       -5.0131e-02  4.5029e-02 -1.1133 0.2655747    
+## newincome         -4.3182e-05  1.3068e-05 -3.3044 0.0009518 ***
+## prate:diplomaless  1.2771e-03  5.2539e-04  2.4309 0.0150627 *  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+</div>
+</div>

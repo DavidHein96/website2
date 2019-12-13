@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="Dave Hein" />
+    <meta name="description" content="This is a website about me, Dave Hein">
+    <link rel="shortcut icon" type="image/x-icon" href="/img/favicon.ico">
+    <title>Opioid Crisis Part 2</title>
+    <meta name="generator" content="Hugo 0.60.1" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
+    
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    
+  </head>
+
+  <body>
+    <div id="wrap">
+
+      
+      <nav class="navbar navbar-default">
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="/"><i class="fa fa-home"></i></a>
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="navbar-collapse collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+      
+        
+        <li><a href="/blog/">BLOG</a></li>
+        
+        <li><a href="/projects/">PROJECTS</a></li>
+        
+        <li><a href="/resume/">RESUME</a></li>
+        
+      
+      </ul>
+    </div>
+  </div>
+</nav>
+
+      
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="/blog/dmhopioidproject2/">Opioid Crisis Part 2</a></strong>
+          </h3>
+        </div>
+        <div class="blog-title">
+          <h4>
+          January 1, 0001
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
+
+
+<div id="david-hein" class="section level2">
+<h2>David Hein</h2>
+<div id="introduction" class="section level3">
+<h3>Introduction</h3>
+<p>This project explores the interaction of several different variables related to the ongoing opioid crisis in the United States. There were five different data sets combined, four from project 1 and one new data set. The data sets for opioid prescription rates per 100 people and drug overdose deaths per 100,000 people on a county level in 2016 were taken from the CDC. The data sets for median household income on a county level and percentage of adults lacking a high school diploma on a county level in 2016 were taken from the US Census Bureau. The urbanization levels 1-9 for each county in 2013 was taken from the USDA, with 1 being the most urban and 9 being the most rural. The drug deaths per 100,000 people was renamed to deathrate, the median income was renamed to newincome, the percentage without a highschool diploma was renamed to diplomaless, and the opioid prescription rate per 100 people was renamed prate.</p>
+</div>
+<div id="loading-data-and-packages-cleaning-and-joining-from-project-1" class="section level3">
+<h3>Loading data and packages; Cleaning and Joining (From Project 1)</h3>
+<pre class="r"><code># loading packages and data sets
+setwd(&quot;C:/Users/dave/Desktop/CompBioProject&quot;)
+scriptrate &lt;- read.csv(&quot;Opiod_Rates.csv&quot;)
+income &lt;- read.csv(&quot;finalincome.csv&quot;, stringsAsFactors = FALSE, 
+    header = TRUE)
+deaths &lt;- read.csv(&quot;Drug_poisoning.csv&quot;)
+education &lt;- read.csv(&quot;cleanededucation.csv&quot;)
+urbanrural &lt;- read.csv(&quot;rural.csv&quot;)
+deaths &lt;- as.data.frame(deaths)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+library(lmtest)
+library(pROC)
+library(plotROC)
+library(mvtnorm)
+library(sandwich)
+library(glmnet)
+
+# cleaning data
+sixteendeath &lt;- deaths %&gt;% filter(Year == 2016) %&gt;% select(FIPS, 
+    County, Model.based.Death.Rate) %&gt;% separate(County, into = c(&quot;county&quot;, 
+    &quot;state&quot;), sep = &quot;,&quot;) %&gt;% rename(deathrate = Model.based.Death.Rate) %&gt;% 
+    select(-county)
+cincome &lt;- income$incomes %&gt;% unlist() %&gt;% as.numeric()
+totincome &lt;- income %&gt;% mutate(newincome = cincome)
+ceducation &lt;- education %&gt;% select(FIPS.Code, Area.name, Percent.of.adults.with.less.than.a.high.school.diploma..2013.17) %&gt;% 
+    rename(diplomaless = Percent.of.adults.with.less.than.a.high.school.diploma..2013.17) %&gt;% 
+    rename(county = Area.name) %&gt;% rename(FIPS = FIPS.Code) %&gt;% 
+    select(-county)
+cscriptrate &lt;- scriptrate %&gt;% separate(County, into = c(&quot;county&quot;, 
+    &quot;state&quot;), sep = &quot;,&quot;) %&gt;% select(county, Code, Rate, -state) %&gt;% 
+    rename(FIPS = Code, prate = Rate) %&gt;% drop_na(prate) %&gt;% 
+    distinct()
+# joining data
+educationandprate &lt;- full_join(ceducation, cscriptrate, by = &quot;FIPS&quot;)
+almostfulldata &lt;- inner_join(educationandprate, sixteendeath, 
+    by = &quot;FIPS&quot;)
+fulldata &lt;- inner_join(almostfulldata, totincome, by = &quot;FIPS&quot;) %&gt;% 
+    drop_na() %&gt;% select(-incomes)
+set.seed(1234)</code></pre>
+</div>
+<div id="alterations-to-data-for-project-2" class="section level3">
+<h3>Alterations to data for project 2</h3>
+<p>This is where I introduced the new data set with urbanization codes, the variable name was urbanization. I split it into three levels, 1-3 being metro, 4-6 being suburban, and 7-9 being rural.</p>
+<pre class="r"><code># urbanrural is a new data set for project 2
+urban &lt;- urbanrural %&gt;% select(FIPS, RUCC_2013)
+p2data &lt;- inner_join(fulldata, urban, by = &quot;FIPS&quot;)
+
+# making urbanization catagorical
+pr2data &lt;- p2data %&gt;% mutate(urbanization = case_when(RUCC_2013 &lt; 
+    4 ~ &quot;metro&quot;, 4 &lt;= RUCC_2013 &amp; RUCC_2013 &lt; 7 ~ &quot;suburban&quot;, 
+    RUCC_2013 &gt;= 7 ~ &quot;rural&quot;))</code></pre>
+</div>
+<div id="manova" class="section level3">
+<h3>MANOVA</h3>
+<p>The MANOVA test is statistically significant meaning that one of the numerical variables shows a mean difference across urbanization levels. ANNOVA of all four numeric variables found that there is a significant difference in all four. For prescription rate, deathrate, income, and diplomaless, the mean values differ across levels of urbanization while holding the other variables constant. A 0.05 alpha was used for significance but was adjusted to 0.00294 because 17 tests were used total. For prescription rate, there is a significant difference between suburban and metro and suburban and rural. For deathrate, there were no significant differences between regions after the Bonferroni adjustment. For income, there was a significant difference between rural and metro and suburban and metro. FOr diplomaless there was a significant difference between rural and metro and suburban and metro. The total chance of a type 1 error is 0.002466. The sample size was very large so normality was most likely met, and the data was from government agencies which most likely employee random sampling (or in the case of census data massive sample sizes).</p>
+<pre class="r"><code>mano &lt;- manova(cbind(prate, deathrate, newincome, diplomaless) ~ 
+    urbanization, data = pr2data)
+summary(mano)</code></pre>
+<pre><code>##                Df  Pillai approx F num Df den Df    Pr(&gt;F)    
+## urbanization    2 0.26657   112.99      8   5878 &lt; 2.2e-16 ***
+## Residuals    2941                                             
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>summary.aov(mano)</code></pre>
+<pre><code>##  Response prate :
+##                Df  Sum Sq Mean Sq F value    Pr(&gt;F)    
+## urbanization    2  147352   73676  43.029 &lt; 2.2e-16 ***
+## Residuals    2941 5035709    1712                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response deathrate :
+##                Df Sum Sq Mean Sq F value   Pr(&gt;F)   
+## urbanization    2    785  392.49  6.0174 0.002466 **
+## Residuals    2941 191827   65.22                    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response newincome :
+##                Df     Sum Sq    Mean Sq F value    Pr(&gt;F)    
+## urbanization    2 1.1076e+11 5.5379e+10  376.64 &lt; 2.2e-16 ***
+## Residuals    2941 4.3243e+11 1.4703e+08                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+##  Response diplomaless :
+##                Df Sum Sq Mean Sq F value    Pr(&gt;F)    
+## urbanization    2   5179 2589.71  68.398 &lt; 2.2e-16 ***
+## Residuals    2941 111353   37.86                      
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>pairwise.t.test(pr2data$prate, pr2data$urbanization, padj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  pr2data$prate and pr2data$urbanization 
+## 
+##          metro   rural  
+## rural    0.018   -      
+## suburban 7.5e-12 &lt; 2e-16
+## 
+## P value adjustment method: holm</code></pre>
+<pre class="r"><code>pairwise.t.test(pr2data$deathrate, pr2data$urbanization, padj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  pr2data$deathrate and pr2data$urbanization 
+## 
+##          metro  rural 
+## rural    0.0140 -     
+## suburban 0.0049 0.6485
+## 
+## P value adjustment method: holm</code></pre>
+<pre class="r"><code>pairwise.t.test(pr2data$newincome, pr2data$urbanization, padj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  pr2data$newincome and pr2data$urbanization 
+## 
+##          metro  rural 
+## rural    &lt;2e-16 -     
+## suburban &lt;2e-16 0.0095
+## 
+## P value adjustment method: holm</code></pre>
+<pre class="r"><code>pairwise.t.test(pr2data$diplomaless, pr2data$urbanization, padj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  pr2data$diplomaless and pr2data$urbanization 
+## 
+##          metro  rural
+## rural    &lt;2e-16 -    
+## suburban &lt;2e-16 0.049
+## 
+## P value adjustment method: holm</code></pre>
+<pre class="r"><code># bonferroni, 1 mannova, 4 annova, 12 t tests
+0.05/17</code></pre>
+<pre><code>## [1] 0.002941176</code></pre>
+<pre class="r"><code># alpha = 0.00294
+
+# total p values
+2.2e-16 + 2.2e-16 + 0.002466 + 2.2e-16 + 2.2e-16 + 7.5e-12 + 
+    2e-16 + 2e-16 + 2e-16</code></pre>
+<pre><code>## [1] 0.002466</code></pre>
+</div>
+<div id="randomization" class="section level3">
+<h3>Randomization</h3>
+<p>This randomization test investigates if there is a true difference in deathrate between metro and rural counties. The null would be that the probability of observing a mean difference as large as the one seen experimentally under a random distribution is greater than 5%. The alternative is that it would be less than 5%. The result is 0.0088, meaning that in a random distribution a mean difference in death rates between metro and rural counties of 0.967 would only be seen 0.88% of the time. There is a significant difference between the mean deathrate of urban vs rural counties.</p>
+<pre class="r"><code># randomsample &lt;- pr2data %&gt;%
+# data.frame(condition=c(rep(&#39;prate&#39;,100),rep(&#39;urbanization&#39;,100)),deathrate=c(prate,urbanization))
+
+# actual difference
+pr2data %&gt;% dplyr::select(deathrate, urbanization) %&gt;% group_by(urbanization) %&gt;% 
+    summarize(averagedeath = mean(deathrate))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   urbanization averagedeath
+##   &lt;chr&gt;               &lt;dbl&gt;
+## 1 metro                20.4
+## 2 rural                19.4
+## 3 suburban             19.2</code></pre>
+<pre class="r"><code># metro - rural
+20.36157 - 19.39416</code></pre>
+<pre><code>## [1] 0.96741</code></pre>
+<pre class="r"><code># equal to 0.96741
+
+rand_dist &lt;- vector()
+for (i in 1:5000) {
+    new &lt;- data.frame(deathrate = sample(pr2data$deathrate), 
+        urbanization = pr2data$urbanization)
+    rand_dist[i] &lt;- mean(new[new$urbanization == &quot;metro&quot;, ]$deathrate) - 
+        mean(new[new$urbanization == &quot;rural&quot;, ]$deathrate)
+    
+}
+
+{
+    hist(rand_dist, main = &quot;&quot;, ylab = &quot;&quot;)
+    abline(v = 0.96741, col = &quot;red&quot;)
+}</code></pre>
+<p><img src="/blog/DMHOpioidProject2_files/figure-html/unnamed-chunk-4-1.png" width="480" /></p>
+<pre class="r"><code># prob of observing mean diff as extreme as the experimental
+# under random distribution
+mean(rand_dist &gt; 0.96741) * 2</code></pre>
+<pre><code>## [1] 0.0068</code></pre>
+</div>
+<div id="linear-regression" class="section level3">
+<h3>Linear regression</h3>
+<p>In the linear regression, the intercept means that a metro county with average prescription rate has a drug overdose death rate of 20.54 per 100,000. Centerp of 0.0724 means that for every 1 increase in prescription rate above average there is a 0.072 increase in overdose death rate. The value of -0.789 for urbanizationrural means that compared to a metro county with the same number of prescriptions, a rural county has a deathrate 0.789 lower. The value of urbanizationsuburban of -1.76 means that a suburban county has a death rate 1.76 lower than a metro county with the same number of prescriptions. The terms for center:p:urbanizationrural means that the effect of prescriptions on death rates is different between metro and rural counties. The term for centerp:urbanizationsuburban means that the effect of prescription rate on death rate is different between metro and suburban counties.</p>
+<p>The residuals are not normally distributed and do not have equal variance as seen the the graphs. Using robust standard errors did not affect the significance of any terms, although it did raise p values, they are still all significant at a 0.05 level. Using robust standard errors did increase the standard error for every term except urbanizationsuburban.</p>
+<pre class="r"><code># mean centering and linear regression
+lr1data &lt;- pr2data %&gt;% dplyr::select(deathrate, prate, urbanization) %&gt;% 
+    mutate(centerp = prate - mean(prate))
+fit1 &lt;- glm(deathrate ~ centerp * urbanization, data = lr1data)
+coeftest(fit1)</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##                                Estimate Std. Error z value  Pr(&gt;|z|)    
+## (Intercept)                  20.5461470  0.2309260 88.9729 &lt; 2.2e-16 ***
+## centerp                       0.0724730  0.0068707 10.5481 &lt; 2.2e-16 ***
+## urbanizationrural            -0.7890597  0.3458396 -2.2816  0.022514 *  
+## urbanizationsuburban         -1.7634960  0.3536509 -4.9865 6.147e-07 ***
+## centerp:urbanizationrural    -0.0199350  0.0085538 -2.3305  0.019778 *  
+## centerp:urbanizationsuburban -0.0302274  0.0094024 -3.2148  0.001305 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>summary(fit1)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = deathrate ~ centerp * urbanization, data = lr1data)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -16.954   -4.919   -1.644    2.787   63.275  
+## 
+## Coefficients:
+##                               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                  20.546147   0.230926  88.973  &lt; 2e-16 ***
+## centerp                       0.072473   0.006871  10.548  &lt; 2e-16 ***
+## urbanizationrural            -0.789060   0.345840  -2.282  0.02259 *  
+## urbanizationsuburban         -1.763496   0.353651  -4.987  6.5e-07 ***
+## centerp:urbanizationrural    -0.019935   0.008554  -2.331  0.01985 *  
+## centerp:urbanizationsuburban -0.030227   0.009402  -3.215  0.00132 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for gaussian family taken to be 59.96632)
+## 
+##     Null deviance: 192612  on 2943  degrees of freedom
+## Residual deviance: 176181  on 2938  degrees of freedom
+## AIC: 20415
+## 
+## Number of Fisher Scoring iterations: 2</code></pre>
+<pre class="r"><code># plot of linear regression
+qplot(x = centerp, y = deathrate, color = urbanization, data = lr1data) + 
+    stat_smooth(method = &quot;lm&quot;, se = FALSE, fullrange = TRUE)</code></pre>
+<p><img src="/blog/DMHOpioidProject2_files/figure-html/unnamed-chunk-5-1.png" width="480" /></p>
+<pre class="r"><code># check equal varience of residuals
+resids1 &lt;- fit1$residuals
+fitvals1 &lt;- fit1$fitted.values
+ggplot() + geom_point(aes(fitvals1, resids1)) + geom_hline(yintercept = 0, 
+    color = &quot;red&quot;)</code></pre>
+<p><img src="/blog/DMHOpioidProject2_files/figure-html/unnamed-chunk-5-2.png" width="480" /></p>
+<pre class="r"><code># check normality of residuals
+ggplot() + geom_histogram(aes(resids1), bins = 30)</code></pre>
+<p><img src="/blog/DMHOpioidProject2_files/figure-html/unnamed-chunk-5-3.png" width="480" /></p>
+<pre class="r"><code># recompute with robust SE
+bptest(fit1)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  fit1
+## BP = 60.851, df = 5, p-value = 8.107e-12</code></pre>
+<pre class="r"><code>coeftest(fit1, vcov = vcovHC(fit1))</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##                                Estimate Std. Error z value  Pr(&gt;|z|)    
+## (Intercept)                  20.5461470  0.2768218 74.2216 &lt; 2.2e-16 ***
+## centerp                       0.0724730  0.0076901  9.4242 &lt; 2.2e-16 ***
+## urbanizationrural            -0.7890597  0.3637094 -2.1695  0.030046 *  
+## urbanizationsuburban         -1.7634960  0.3527540 -4.9992 5.756e-07 ***
+## centerp:urbanizationrural    -0.0199350  0.0096160 -2.0731  0.038163 *  
+## centerp:urbanizationsuburban -0.0302274  0.0101016 -2.9923  0.002769 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code># % of variation model explains, for some reason I could not
+# get the r squared
+
+
+# Lm with no interaction likelyhood ratio test???
+fit2 &lt;- glm(deathrate ~ centerp + urbanization, data = lr1data)
+coeftest(fit2)</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##                        Estimate Std. Error z value  Pr(&gt;|z|)    
+## (Intercept)          20.5006061  0.2307679 88.8365 &lt; 2.2e-16 ***
+## centerp               0.0545918  0.0034559 15.7967 &lt; 2.2e-16 ***
+## urbanizationrural    -0.7293316  0.3444328 -2.1175   0.03422 *  
+## urbanizationsuburban -1.8461210  0.3502462 -5.2709 1.357e-07 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+</div>
+<div id="linear-regression-w-bootstrap" class="section level3">
+<h3>Linear regression w/ bootstrap</h3>
+<p>The bootsrtapped standard errors are the largest out of the original and the robust, excpet for urbanization suburban which is lower than the robust SE method.</p>
+<pre class="r"><code>samp_distn &lt;- replicate(5000, {
+    boot_dat &lt;- lr1data[sample(nrow(lr1data), replace = TRUE), 
+        ]
+    fit &lt;- lm(deathrate ~ centerp * urbanization, data = boot_dat)
+    coef(fit)
+    
+})
+
+# bootstraped SEs
+samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
+<pre><code>##   (Intercept)    centerp urbanizationrural urbanizationsuburban
+## 1   0.2731317 0.00773267         0.3613278            0.3536295
+##   centerp:urbanizationrural centerp:urbanizationsuburban
+## 1               0.009734309                  0.009994205</code></pre>
+</div>
+<div id="logistic-regression" class="section level3">
+<h3>Logistic Regression</h3>
+<p>In the logistic regression the prescription rate, income, rural and suburban terms were significant. An increase in 1 prescription per 100 people increases the odds of a county being 1 standard deviation above the mean in drug overdose death rates by a factor of 1.011 (while controlling for other variables). An increase in 1 dollar in median income in a county decreases the odds of a county being 1 standard deviation above the mean in drug overdose death rates by a factor of 0.9998 (while controlling for other variables). The odds that a rural county has 1 standard deviation above the mean in drug overdose death rates is 0.34 the odds of a metro county while controlling for other variables. Finally, the odds of a suburban county having 1 standard deviation above the mean in drug overdose death rates is 0.28 the odds of a metro county while controlling for other variables. The accuracy was quite good at 88% but this is misleading as the sensitivity is very bad at only 17%. The model is greatly underpredicting the number of counties with large amounts of drug overdoses. The specificity is great since the majority of counties have low deathrates, but the precision is only 50%. The AUC is 0.71 which is not that great, but still better than chance. The out of sample accuracy, sensitivity and recall were all basically the same, this is most likely due to the large sample size used to create the model.</p>
+<pre class="r"><code># making death rate binary, with 1 equal to 1 stdev above
+# mean
+meandeathrate &lt;- mean(fulldata$deathrate)
+stdevdeathrate &lt;- sd(fulldata$deathrate)
+cuttoff &lt;- meandeathrate + stdevdeathrate
+cuttoff</code></pre>
+<pre><code>## [1] 27.77922</code></pre>
+<pre class="r"><code>logdata &lt;- pr2data %&gt;% mutate(highdeaths = ifelse(deathrate &gt; 
+    27.77, 1, 0))
+
+
+fitlog &lt;- glm(highdeaths ~ diplomaless + prate + newincome + 
+    urbanization, data = logdata, family = binomial)
+coeftest(fitlog)</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##                         Estimate  Std. Error z value  Pr(&gt;|z|)    
+## (Intercept)          -1.4341e+00  5.3816e-01 -2.6649  0.007701 ** 
+## diplomaless           1.8868e-02  1.2071e-02  1.5631  0.118025    
+## prate                 1.1404e-02  1.4227e-03  8.0155 1.097e-15 ***
+## newincome            -2.3848e-05  7.1395e-06 -3.3402  0.000837 ***
+## urbanizationrural    -1.0503e+00  1.5939e-01 -6.5899 4.402e-11 ***
+## urbanizationsuburban -1.2477e+00  1.5849e-01 -7.8724 3.478e-15 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>exp(coeftest(fitlog))</code></pre>
+<pre><code>## 
+## z test of coefficients:
+## 
+##                      Estimate Std. Error   z value Pr(&gt;|z|)
+## (Intercept)           0.23832    1.71285    0.0696    1.008
+## diplomaless           1.01905    1.01214    4.7737    1.125
+## prate                 1.01147    1.00142 3027.3910    1.000
+## newincome             0.99998    1.00001    0.0354    1.001
+## urbanizationrural     0.34982    1.17279    0.0014    1.000
+## urbanizationsuburban  0.28717    1.17174    0.0004    1.000</code></pre>
+<pre class="r"><code># confusion matrix
+prob &lt;- predict(fitlog, type = &quot;response&quot;)
+table(predict = as.numeric(prob &gt; 0.5), truth = logdata$highdeaths) %&gt;% 
+    addmargins</code></pre>
+<pre><code>##        truth
+## predict    0    1  Sum
+##     0   2592  340 2932
+##     1      6    6   12
+##     Sum 2598  346 2944</code></pre>
+<pre class="r"><code># accuracy
+(2592 + 6)/2944</code></pre>
+<pre><code>## [1] 0.8824728</code></pre>
+<pre class="r"><code># sensitivity TPR
+6/346</code></pre>
+<pre><code>## [1] 0.01734104</code></pre>
+<pre class="r"><code># specificity TNR
+2592/2598</code></pre>
+<pre><code>## [1] 0.9976905</code></pre>
+<pre class="r"><code># precision PPV
+6/12</code></pre>
+<pre><code>## [1] 0.5</code></pre>
+<pre class="r"><code># plot density log odds by binary outcome
+datatest &lt;- logdata
+datatest$logit &lt;- predict(fitlog, type = &quot;link&quot;)
+datatest$hdr &lt;- as.factor(datatest$highdeaths)
+datatest %&gt;% ggplot() + geom_density(aes(logit, color = hdr, 
+    fill = hdr), alpha = 0.4) + theme(legend.position = c(0.8, 
+    0.8)) + geom_vline(xintercept = 0) + xlab(&quot;predictor&quot;)</code></pre>
+<p><img src="/blog/DMHOpioidProject2_files/figure-html/unnamed-chunk-7-1.png" width="480" /></p>
+<pre class="r"><code># ROC curve and AUC
+ROC &lt;- ggplot(logdata) + geom_roc(aes(d = highdeaths, m = prob), 
+    n.cuts = 0)
+ROC</code></pre>
+<p><img src="/blog/DMHOpioidProject2_files/figure-html/unnamed-chunk-7-2.png" width="480" /></p>
+<pre class="r"><code>calc_auc(ROC)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.7114582</code></pre>
+<pre class="r"><code># Ten fold CV class diags, I used the code from HW9 I assume
+# its ok to reuse this code?
+class_diag &lt;- function(probs, truth) {
+    
+    tab &lt;- table(factor(probs &gt; 0.5, levels = c(&quot;FALSE&quot;, &quot;TRUE&quot;)), 
+        truth)
+    acc = sum(diag(tab))/sum(tab)
+    sens = tab[2, 2]/colSums(tab)[2]
+    spec = tab[1, 1]/colSums(tab)[1]
+    ppv = tab[2, 2]/rowSums(tab)[2]
+    
+    if (is.numeric(truth) == FALSE &amp; is.logical(truth) == FALSE) 
+        truth &lt;- as.numeric(truth) - 1
+    
+    ord &lt;- order(probs, decreasing = TRUE)
+    probs &lt;- probs[ord]
+    truth &lt;- truth[ord]
+    
+    TPR = cumsum(truth)/max(1, sum(truth))
+    FPR = cumsum(!truth)/max(1, sum(!truth))
+    
+    dup &lt;- c(probs[-1] &gt;= probs[-length(probs)], FALSE)
+    TPR &lt;- c(0, TPR[!dup], 1)
+    FPR &lt;- c(0, FPR[!dup], 1)
+    
+    n &lt;- length(TPR)
+    auc &lt;- sum(((TPR[-1] + TPR[-n])/2) * (FPR[-1] - FPR[-n]))
+    
+    data.frame(acc, sens, spec, ppv, auc)
+}
+
+k = 10
+cvdata &lt;- logdata[sample(nrow(logdata)), ]
+folds &lt;- cut(seq(1:nrow(logdata)), breaks = k, labels = F)
+diags &lt;- NULL
+for (i in 1:k) {
+    train &lt;- cvdata[folds != i, ]
+    test &lt;- cvdata[folds == i, ]
+    truth &lt;- test$highdeaths
+    
+    fitlog2 &lt;- glm(highdeaths ~ diplomaless + prate + newincome + 
+        urbanization, data = logdata, family = binomial)
+    probs &lt;- predict(fitlog2, newdata = test, type = &quot;response&quot;)
+    
+    diags &lt;- rbind(diags, class_diag(probs, truth))
+    
+}
+apply(diags, 2, mean)</code></pre>
+<pre><code>##       acc      sens      spec       ppv       auc 
+## 0.8824628 0.0177414 0.9977231       NaN 0.7133465</code></pre>
+</div>
+<div id="lasso-regression" class="section level3">
+<h3>LASSO Regression</h3>
+<p>All predictors ended up being useful accroding to LASSO. Thus, there was baisically no change in no change in out of sample accuracy or AUC.</p>
+<pre class="r"><code># predictors in one matrix, response in another
+y1 &lt;- as.matrix(logdata$highdeaths)
+x &lt;- model.matrix(fitlog)
+x2 &lt;- as.data.frame(x)
+x3 &lt;- x2 %&gt;% dplyr::select(-&quot;(Intercept)&quot;)
+x4 &lt;- as.matrix(x3)
+
+# lasso
+cv1 &lt;- cv.glmnet(x4, y1, family = &quot;binomial&quot;)
+lasso &lt;- glmnet(x4, y1, lambda = cv1$lambda.1se, family = &quot;binomial&quot;)
+coef(lasso)</code></pre>
+<pre><code>## 6 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                                 s0
+## (Intercept)          -2.628899e+00
+## diplomaless           8.718689e-03
+## prate                 9.665044e-03
+## newincome            -2.210566e-06
+## urbanizationrural    -2.317701e-01
+## urbanizationsuburban -4.342916e-01</code></pre>
+<pre class="r"><code># 10 fold CV (to avoid being repetative I left out newincome
+# since it was closest to zero)
+k = 10
+cvdata &lt;- logdata[sample(nrow(logdata)), ]
+folds &lt;- cut(seq(1:nrow(logdata)), breaks = k, labels = F)
+diags &lt;- NULL
+
+
+for (i in 1:k) {
+    train &lt;- cvdata[folds != i, ]
+    test &lt;- cvdata[folds == i, ]
+    truth &lt;- test$highdeaths
+    
+    fitlog2 &lt;- glm(highdeaths ~ diplomaless + prate + urbanization, 
+        data = logdata, family = binomial)
+    probs &lt;- predict(fitlog2, newdata = test, type = &quot;response&quot;)
+    
+    diags &lt;- rbind(diags, class_diag(probs, truth))
+}
+apply(diags, 2, mean)</code></pre>
+<pre><code>##        acc       sens       spec        ppv        auc 
+## 0.88246858 0.01988283 0.99730304        NaN 0.70301041</code></pre>
+</div>
+</div>
+
+              <hr>
+              <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div>
+            </div>
+          </div>
+          <hr>
+        <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
+
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+        </div>
+      </div>
+      
+    </div>
+
+    
+    <footer>
+  <div id="footer">
+    <div class="container">
+      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a> and
+      <a href="http://www.github.com/nurlansu/hugo-sustain/">sustain</a> with ♥</p>
+    </div>
+  </div>
+</footer>
+<div class="footer"></div>
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="/js/docs.min.js"></script>
+<script src="/js/main.js"></script>
+
+<script src="/js/ie10-viewport-bug-workaround.js"></script>
+
+
+    
+  </body>
+</html>
