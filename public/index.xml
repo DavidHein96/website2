@@ -6,10 +6,28 @@
     <description>Recent content on Dave Hein</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Sun, 02 Oct 2016 22:55:05 -0400</lastBuildDate>
+    <lastBuildDate>Sat, 14 Dec 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Learning about Python</title>
+      <link>/blog/learning-about-python/</link>
+      <pubDate>Sat, 14 Dec 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/blog/learning-about-python/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Learning about Python</title>
+      <link>/2019/12/14/learning-about-python/</link>
+      <pubDate>Sat, 14 Dec 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/12/14/learning-about-python/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>Projects</title>
