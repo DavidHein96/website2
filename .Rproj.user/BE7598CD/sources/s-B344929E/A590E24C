@@ -1,25 +1,23 @@
 {
     "collab_server" : "",
     "contents" : "",
-    "created" : 1576270768491.000,
+    "created" : 1576272028433.000,
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "0",
-    "id" : "DF0949D4",
+    "hash" : "26995823",
+    "id" : "A590E24C",
     "lastKnownWriteTime" : 1576004057,
     "last_content_update" : 1576004057,
-    "path" : "C:/Users/dave/Desktop/GitHub/website2/data/projects.yml",
-    "project_path" : "data/projects.yml",
+    "path" : "C:/Users/dave/Desktop/GitHub/website2/public/css/main.css",
+    "project_path" : "public/css/main.css",
     "properties" : {
-        "cursorPosition" : "9,40",
-        "scrollLine" : "0"
     },
     "read_only" : false,
     "read_only_alternatives" : [
     ],
-    "relative_order" : 6,
+    "relative_order" : 13,
     "source_on_save" : false,
     "source_window" : "",
-    "type" : "yaml"
+    "type" : "css"
 }
