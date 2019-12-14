@@ -5,14 +5,14 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "0",
+    "hash" : "1919297530",
     "id" : "A590E24C",
-    "lastKnownWriteTime" : 1576004057,
-    "last_content_update" : 1576004057,
+    "lastKnownWriteTime" : 1576367509,
+    "last_content_update" : 1576367509037,
     "path" : "C:/Users/dave/Desktop/GitHub/website2/public/css/main.css",
     "project_path" : "public/css/main.css",
     "properties" : {
-        "cursorPosition" : "191,18",
+        "cursorPosition" : "191,28",
         "scrollLine" : "154"
     },
     "read_only" : false,
