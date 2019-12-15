@@ -1,0 +1,74 @@
+---
+title: "My Resume"
+author: "Dave Hein"
+date: "12-15-2019"
+output: html_document
+---
+
+
+
+<div id="dave-hein" class="section level2">
+<h2>Dave Hein</h2>
+<div id="contact-info" class="section level4">
+<h4>Contact Info</h4>
+<p>Email: <a href="mailto:Davidhein67@gmail.com" class="email">Davidhein67@gmail.com</a><br />
+Phone: (469) 585-6136</p>
+</div>
+<div id="education" class="section level4">
+<h4>Education</h4>
+<ul>
+<li>University of Texas at Austin
+<ul>
+<li>B.S. in Chemistry</li>
+<li>McCombs Business Foundations Certificate</li>
+</ul></li>
+</ul>
+</div>
+<div id="experience" class="section level4">
+<h4>Experience</h4>
+<ul>
+<li>Antibiotics FRI Lab
+<ul>
+<li>Conducted microbiology research in identifying, extracting, and testing novel antibiotics</li>
+<li>Designed experiments to investigate antibiotic production in streptomyces bacteria</li>
+</ul></li>
+<li>Antibiotics FRI Lab
+<ul>
+<li>Conducted microbiology research in identifying, extracting, and testing novel antibiotics</li>
+<li>Designed experiments to investigate antibiotic production in streptomyces bacteria</li>
+</ul></li>
+<li>UT Rec Sports &amp; City of McKinney Aquatics
+<ul>
+<li>Maintained and ensured safety at several large public swimming pools</li>
+<li>Performed rescue and first aid in adverse situations; CPR certified</li>
+</ul></li>
+</ul>
+</div>
+<div id="activities-and-leadership" class="section level4">
+<h4>Activities and Leadership</h4>
+<ul>
+<li>UTeach Outreach
+<ul>
+<li>Taught hands on science lessons to 2nd grade students at Rodriguez Elementary in Austin ISD</li>
+</ul></li>
+<li>Texas Tribe Social and Service Organization
+<ul>
+<li>Participated in numerous volunteer activities around Austin such as the Central Texas Food Bank and the Inside Books Project</li>
+</ul></li>
+</ul>
+</div>
+<div id="skills" class="section level4">
+<h4>Skills</h4>
+<ul>
+<li>Multiple lab courses in Inorganic, physical and organic chemistry. Including an organic laboratory class where we performed a 7-step synthesis of a potential Alzheimer’s treatment</li>
+<li>Computational Biology class that utilized statistical analysis of large data sets in R and Python.</li>
+</ul>
+</div>
+<div id="honors-and-awards" class="section level4">
+<h4>Honors and awards</h4>
+<ul>
+<li>Natural Sciences Honors Student, recipient of Chemistry department academic scholarship</li>
+<li>Fall 2017 3v3 intramural soccer tournament champion</li>
+</ul>
+</div>
+</div>

@@ -6,10 +6,19 @@
     <description>Recent content on Dave Hein</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Sat, 14 Dec 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 15 Dec 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Resume</title>
+      <link>/2019/12/15/resume/</link>
+      <pubDate>Sun, 15 Dec 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/12/15/resume/</guid>
+      <description>David HeinIntroductionThis project explores the interaction of several different variables related to the ongoing opioid crisis in the United States. There were four different data sets combined. The data sets for opioid prescription rates per 100 people and drug ovdeaths per 100,000 people on a county level in 2016 were taken from the CDC. The data sets for median household income on a county level and percentage of adults lacking a high school diploma on a county level in 2016 were taken from the US Census Bureau.</description>
+    </item>
     
     <item>
       <title>Learning about Python</title>
@@ -30,6 +39,24 @@
     </item>
     
     <item>
+      <title>Opioid Crisis Part 2</title>
+      <link>/blog/dmhopioidproject2/</link>
+      <pubDate>Wed, 20 Nov 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/blog/dmhopioidproject2/</guid>
+      <description>David HeinIntroductionThis project explores the interaction of several different variables related to the ongoing opioid crisis in the United States. There were five different data sets combined, four from project 1 and one new data set. The data sets for opioid prescription rates per 100 people and drug overdose deaths per 100,000 people on a county level in 2016 were taken from the CDC. The data sets for median household income on a county level and percentage of adults lacking a high school diploma on a county level in 2016 were taken from the US Census Bureau.</description>
+    </item>
+    
+    <item>
+      <title>Exploring the Opioid Crisis</title>
+      <link>/blog/dmhproject1knitted/</link>
+      <pubDate>Sun, 20 Oct 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/blog/dmhproject1knitted/</guid>
+      <description>David HeinIntroductionThis project explores the interaction of several different variables related to the ongoing opioid crisis in the United States. There were four different data sets combined. The data sets for opioid prescription rates per 100 people and drug overdose deaths per 100,000 people on a county level in 2016 were taken from the CDC. The data sets for median household income on a county level and percentage of adults lacking a high school diploma on a county level in 2016 were taken from the US Census Bureau.</description>
+    </item>
+    
+    <item>
       <title>Projects</title>
       <link>/projects/</link>
       <pubDate>Sun, 02 Oct 2016 22:55:05 -0400</pubDate>
@@ -39,21 +66,14 @@
     </item>
     
     <item>
-      <title>Exploring the Opioid Crisis</title>
-      <link>/blog/dmhproject1knitted/</link>
+      <title>My Resume</title>
+      <link>/blog/resume2/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>/blog/dmhproject1knitted/</guid>
-      <description>David HeinIntroductionThis project explores the interaction of several different variables related to the ongoing opioid crisis in the United States. There were four different data sets combined. The data sets for opioid prescription rates per 100 people and drug overdose deaths per 100,000 people on a county level in 2016 were taken from the CDC. The data sets for median household income on a county level and percentage of adults lacking a high school diploma on a county level in 2016 were taken from the US Census Bureau.</description>
-    </item>
-    
-    <item>
-      <title>Opioid Crisis Part 2</title>
-      <link>/blog/dmhopioidproject2/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/blog/dmhopioidproject2/</guid>
-      <description>David HeinIntroductionThis project explores the interaction of several different variables related to the ongoing opioid crisis in the United States. There were five different data sets combined, four from project 1 and one new data set. The data sets for opioid prescription rates per 100 people and drug overdose deaths per 100,000 people on a county level in 2016 were taken from the CDC. The data sets for median household income on a county level and percentage of adults lacking a high school diploma on a county level in 2016 were taken from the US Census Bureau.</description>
+      <guid>/blog/resume2/</guid>
+      <description>Dave HeinContact InfoEmail: Davidhein67@gmail.com
+Phone: (469) 585-6136
+EducationUniversity of Texas at AustinB.S. in ChemistryMcCombs Business Foundations CertificateExperienceAntibiotics FRI LabConducted microbiology research in identifying, extracting, and testing novel antibioticsDesigned experiments to investigate antibiotic production in streptomyces bacteriaAntibiotics FRI LabConducted microbiology research in identifying, extracting, and testing novel antibioticsDesigned experiments to investigate antibiotic production in streptomyces bacteriaUT Rec Sports &amp;amp; City of McKinney AquaticsMaintained and ensured safety at several large public swimming poolsPerformed rescue and first aid in adverse situations; CPR certifiedActivities and LeadershipUTeach OutreachTaught hands on science lessons to 2nd grade students at Rodriguez Elementary in Austin ISDTexas Tribe Social and Service OrganizationParticipated in numerous volunteer activities around Austin such as the Central Texas Food Bank and the Inside Books ProjectSkillsMultiple lab courses in Inorganic, physical and organic chemistry.</description>
     </item>
     
   </channel>

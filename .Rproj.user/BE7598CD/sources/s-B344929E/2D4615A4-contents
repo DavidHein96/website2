@@ -22,13 +22,13 @@ theme = "hugo-sustain"
 [params.social]
   Github        = "davidhein96"
   Email         = "davidhein67@gmail.com"
-  LinkedIn      = "username"
+  
  
 
 ## Main Menu
 [[menu.main]]
-  name = "blog"
+  name = "blog, projects, resume"
   weight = 100
-  identifier = "blog"
+  identifier = "blog, projects, resume"
   url = "/blog/"
 

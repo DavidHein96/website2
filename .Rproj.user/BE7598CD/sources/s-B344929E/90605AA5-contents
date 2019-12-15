@@ -1,0 +1,55 @@
+---
+title: "My Resume"
+author: "Dave Hein"
+date: "12-15-2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Dave Hein
+
+#### Contact Info
+Email: Davidhein67@gmail.com  
+Phone: (469) 585-6136
+
+
+#### Education
+* University of Texas at Austin  
+  * B.S. in Chemistry
+  * McCombs Business Foundations Certificate 
+
+#### Experience
+* Antibiotics FRI Lab 
+  * Conducted microbiology research in identifying, extracting, and testing novel antibiotics 
+  * Designed experiments to investigate antibiotic production in streptomyces bacteria 
+* Antibiotics FRI Lab 
+  * Conducted microbiology research in identifying, extracting, and testing novel antibiotics 
+  * Designed experiments to investigate antibiotic production in streptomyces bacteria 
+  
+* UT Rec Sports & City of McKinney Aquatics  
+  * Maintained and ensured safety at several large public swimming pools
+  * Performed rescue and first aid in adverse situations; CPR certified
+
+#### Activities and Leadership
+* UTeach Outreach  
+  * Taught hands on science lessons to 2nd grade students at Rodriguez Elementary in Austin ISD
+* Texas Tribe Social and Service Organization  
+  * Participated in numerous volunteer activities around Austin such as the Central Texas Food Bank and the Inside Books Project  
+
+#### Skills
+* Multiple lab courses in Inorganic, physical and organic chemistry. Including an organic laboratory class where we performed a 7-step synthesis of a potential Alzheimer’s treatment
+* Computational Biology class that utilized statistical analysis of large data sets in R and Python. 
+
+#### Honors and awards
+* Natural Sciences Honors Student, recipient of Chemistry department academic scholarship
+* Fall 2017 3v3 intramural soccer tournament champion 
+
+
+```{r pressure, echo=FALSE}
+
+```
+
+

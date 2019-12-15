@@ -6,10 +6,28 @@
     <description>Recent content on Dave Hein</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Sat, 14 Dec 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 15 Dec 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Resume</title>
+      <link>/blog/resume/</link>
+      <pubDate>Sun, 15 Dec 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/blog/resume/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Resume</title>
+      <link>/2019/12/15/resume/</link>
+      <pubDate>Sun, 15 Dec 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/2019/12/15/resume/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>Learning about Python</title>
@@ -41,7 +59,7 @@
     <item>
       <title>Exploring the Opioid Crisis</title>
       <link>/blog/dmhproject1knitted/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 01 Oct 2019 00:00:00 +0000</pubDate>
       
       <guid>/blog/dmhproject1knitted/</guid>
       <description>David Hein
@@ -52,7 +70,7 @@ This project explores the interaction of several different variables related to 
     <item>
       <title>Opioid Crisis Part 2</title>
       <link>/blog/dmhopioidproject2/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 29 Nov 2019 00:00:00 +0000</pubDate>
       
       <guid>/blog/dmhopioidproject2/</guid>
       <description>David Hein
