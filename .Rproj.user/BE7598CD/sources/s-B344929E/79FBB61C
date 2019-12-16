@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1576469177266.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4224604661",
+    "id" : "79FBB61C",
+    "lastKnownWriteTime" : 1576469183,
+    "last_content_update" : 1576469183870,
+    "path" : "C:/Users/dave/Desktop/GitHub/website2/content/blog/2019-12-14-learning-about-python.Rmd",
+    "project_path" : "content/blog/2019-12-14-learning-about-python.Rmd",
+    "properties" : {
+        "cursorPosition" : "9,11",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 11,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
