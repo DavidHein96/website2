@@ -27,7 +27,7 @@ library(reticulate)
 
 ```{python}
 flights = 1
-
+1
 ```
 
 
