@@ -1,0 +1,16 @@
+"0","install.packages(""anaconda"")
+"
+"2","Installing package into ‘C:/Users/dave/Documents/R/win-library/3.6’
+(as ‘lib’ is unspecified)
+"
+"1","Warning in "
+"1",""
+"1","install.packages"
+"1",""
+"1"," :
+  "
+"1",""
+"1","package â€˜anacondaâ€™ is not available (for R version 3.6.1)"
+"1",""
+"1","
+"
